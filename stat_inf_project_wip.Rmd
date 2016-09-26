@@ -1,0 +1,109 @@
+---
+title: "Statistical inference with the GSS data"
+output: 
+  html_document: 
+    fig_height: 6
+    highlight: pygments
+    theme: spacelab
+---
+
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 100)
+```
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+```
+## Part 1: Data
+
+Since 1972, the General Social Survey (GSS) has been monitoring societal change and studying the growing complexity of American society. The GSS aims to gather data on contemporary American society in order to monitor and explain trends and constants in attitudes, behaviors, and attributes; to examine the structure and functioning of society in general as well as the role played by relevant subgroups; to compare the United States to other societies in order to place American society in comparative perspective and develop cross-national models of human society; and to make high-quality data easily accessible to scholars, students, policy makers, and others, with minimal cost and waiting.
+
+Let's load the data
+
+### Load data
+```{r load-data}
+load("gss.Rdata")
+```
+
+The total number of observation here is 57061 which is certainly less than 10% of the population. Hence we can assume the sample is independent and random. 
+According to GSS survey people under 18 years of age in under represented .Hence we would use a set which would focus on population who are able to work.
+
+## Part 2: Research Question
+We are interested to know if we can infer from the GSS sample observation in USA, self employed people have more job satisfaction compared to those who are working for others.
+
+## Part 3: Exploratory data analysis
+
+To do that we create a two way table with gss$satjob and gss$wrkslf like below
+
+```{r data, fig.width=10}
+tbl_job = table(gss$wrkslf,gss$satjob)
+
+tbl_job
+```
+
+We can visualize the same using mosaic plot. Here we see some difference in proportion of self employed people who are very or moderately satisfied with those who are working for somone else with the same satisfaction level.
+
+```{r plot}
+mosaicplot(tbl_job,main="Job Satisfaction",xlab="Work for",ylab="Job Satisfaction")
+```
+
+To summarize, we can use prop.table to compare the percentage 
+
+```{r proportion for self employed}
+prop.table(tbl_job[1,])
+```
+Also for those working for someone else
+
+```{r proportion for non self employed}
+prop.table(tbl_job[2,])
+```
+We see there is some difference in the proportion of self employed people who are satisfied with their job.
+Lets find out the difference is satistically significance or not
+
+## Part 4: Inference
+
+To test the significance we will use the Chi square test of independence hence our Hypothese would be<br>Ho = The Job satisfaction and employment status in independent i.e. job satisfaction does not depend on whether someone is self employed or not.<br>
+Ha = Job satisfaction differ from self employed people to those who are working for others
+We would use a p value of 0.05 i.e 5% significance level.
+
+Let\\`s have another look at the data
+```{r job table data}
+
+tbl_job
+
+```
+
+Here it looks like we can merge columns in the table to have only two columns to indicate "Satisfied"" or "Dissatisfied" for better clarity.
+
+```{r merge table columns}
+tbl_job <- cbind(tbl_job[,1]+tbl_job[,2],tbl_job[,3]+tbl_job[,4])
+cn = c("Satisfied", "Dissatisfied")
+colnames(tbl_job) = cn
+tbl_job
+```
+ 
+Since it is a two way table to categorical data with more that two levels, we cannot build a confidence interval. 
+To build the inference, we can use the Chi square method to calculate the test statistics and p Value
+ 
+here df = (2-1)*(2-1) = 1
+
+We can calculate the Chi square statistics by calculating the expected value in each cell and using the formula
+x2 = (0i - Ei)^2/Oi   where i = 1..k= no of cells
+ 
+Thus we get the equation
+<br>x2 = (4036 - 4301)^2/ 4036+(389 - 654)^2 / 654+(4851 - 5116)^2/4851 + (29931 - 29666)^2/29666
+   = 141
+   
+Using R to calculate chi square statistics
+ 
+```{r Using Chi squar statistics}
+pchisq(141,1,lower.tail = FALSE)
+```
+Hence we can see the p value is quite small and we can reject the null hypothesis in favor of the alternate one i.e. the self employed people tend to have more job satisfaction than those who work for others.   
+    
